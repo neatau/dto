@@ -86,4 +86,55 @@ describe('BaseDTO', () => {
       );
     });
   });
+
+  describe('equals', () => {
+    class CreateArticleDTO extends DTO({
+      schema: z.object({
+        title: z.string().min(1).max(200),
+        content: z.string().min(1),
+        tags: z.array(z.string()).optional(),
+      }),
+    }) {}
+
+    it('should correctly compare equality between two DTOs', () => {
+      const first = new CreateArticleDTO({
+        content: 'Content 1',
+        title: 'Title 1',
+      });
+
+      const second = new CreateArticleDTO({
+        title: 'Title 1',
+        content: 'Content 1',
+      });
+
+      const third = new CreateArticleDTO({
+        title: 'Title 2',
+        tags: ['tag3'],
+        content: 'Content 2',
+      });
+
+      const fourth = new CreateArticleDTO({
+        title: 'Title 2',
+        content: 'Content 2',
+        tags: ['tag3', 'tag4'],
+      });
+
+      const fourthAgain = new CreateArticleDTO({
+        tags: ['tag3', 'tag4'],
+        content: 'Content 2',
+        title: 'Title 2',
+      });
+
+      const fifth = new CreateArticleDTO({
+        title: 'Title 3',
+        content: 'Content 3',
+      });
+
+      expect(first.equals(second)).toBe(true);
+      expect(first.equals(third)).toBe(false);
+      expect(first.equals(fourth)).toBe(false);
+      expect(first.equals(fifth)).toBe(false);
+      expect(fourth.equals(fourthAgain)).toBe(true);
+    });
+  });
 });

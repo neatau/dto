@@ -1,3 +1,4 @@
+import deepEqual from 'deep-equal';
 import { z, ZodError, ZodObject, ZodType } from 'zod';
 
 export type DTOOptions<T extends ZodType> = {
@@ -29,6 +30,14 @@ export type DTOInterface<T extends ZodType> = {
    * object suitable for building a URL (e.g. for an API request).
    */
   toSearchParams(): URLSearchParams;
+
+  /**
+   * Perform a deep equality check between the data contained within this DTO
+   * and the target DTO of the same type.
+   *
+   * @param target The target DTO.
+   */
+  equals(target: DTOInterface<T>): boolean;
 };
 
 export type DTOConstructor<T extends ZodType> = {
@@ -111,6 +120,10 @@ export function DTO<T extends ZodObject>(
       }
 
       return params;
+    }
+
+    public equals(target: DTOInterface<T>): boolean {
+      return deepEqual(this.getData(), target.getData());
     }
   };
 }
