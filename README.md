@@ -7,6 +7,10 @@ service layer.
 Problems solved:
 
 - Clean and feature rich implementation of your DTO layer.
+  - Deterministic JSON serialization.
+  - Deterministic hashing.
+  - Deep equality checks between DTOs.
+  - Conversion to other commonly required data structures such as `URLSearchParams`.
 - Validation via Zod.
 
 ## Examples

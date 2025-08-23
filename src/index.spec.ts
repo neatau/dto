@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { createHash } from 'crypto';
 import { z, ZodError } from 'zod';
 import { DTO } from '.';
 
@@ -64,6 +65,24 @@ describe('BaseDTO', () => {
     expect(() => dto.getData()).toThrow(ZodError);
   });
 
+  describe('getDataItem', () => {
+    it('should return the correct data item from the DTO', () => {
+      const first = faker.person.firstName();
+      const last = faker.person.lastName();
+      const email = faker.internet.email();
+
+      const dto = new CreateUserDTO({
+        first,
+        last,
+        email,
+      });
+
+      expect(dto.getDataItem('first')).toBe(first);
+      expect(dto.getDataItem('last')).toBe(last);
+      expect(dto.getDataItem('email')).toBe(email);
+    });
+  });
+
   describe('toSearchParams', () => {
     it('should return the correct URLSearchParams representation of the DTO', () => {
       const first = faker.person.firstName();
@@ -84,6 +103,106 @@ describe('BaseDTO', () => {
       expect(searchParams.toString()).toBe(
         `first=${encodeURIComponent(first)}&last=${encodeURIComponent(last)}&email=${encodeURIComponent(email)}`,
       );
+    });
+  });
+
+  describe('toJSONString', () => {
+    it('should return the correct JSON string representation of the DTO', () => {
+      const first = faker.person.firstName();
+      const last = faker.person.lastName();
+      const email = faker.internet.email();
+
+      const dto = new CreateUserDTO({
+        first,
+        last,
+        email,
+      });
+
+      expect(dto.toJSONString()).toBe(
+        JSON.stringify({
+          email,
+          first,
+          last,
+        }),
+      );
+    });
+
+    it('should return a pretty-printed JSON string if requested', () => {
+      const first = faker.person.firstName();
+      const last = faker.person.lastName();
+      const email = faker.internet.email();
+
+      const dto = new CreateUserDTO({
+        first,
+        last,
+        email,
+      });
+
+      expect(dto.toJSONString(true)).toBe(
+        JSON.stringify(
+          {
+            email,
+            first,
+            last,
+          },
+          null,
+          2,
+        ),
+      );
+    });
+  });
+
+  describe('toHash', () => {
+    it('should return the correct hash of the DTO data', () => {
+      const first = faker.person.firstName();
+      const last = faker.person.lastName();
+      const email = faker.internet.email();
+
+      const dto = new CreateUserDTO({
+        first,
+        last,
+        email,
+      });
+
+      expect(dto.toHash()).toBe(
+        createHash('sha1').update(dto.toJSONString()).digest('hex'),
+      );
+    });
+
+    it('should return the correct hash using a different algorithm', () => {
+      const first = faker.person.firstName();
+      const last = faker.person.lastName();
+      const email = faker.internet.email();
+
+      const dto = new CreateUserDTO({
+        first,
+        last,
+        email,
+      });
+
+      expect(dto.toHash('md5')).toBe(
+        createHash('md5').update(dto.toJSONString()).digest('hex'),
+      );
+    });
+
+    it('should create the same hash for two DTOs with the same contents', () => {
+      const first = faker.person.firstName();
+      const last = faker.person.lastName();
+      const email = faker.internet.email();
+
+      const dto1 = new CreateUserDTO({
+        first,
+        email,
+        last,
+      });
+
+      const dto2 = new CreateUserDTO({
+        email,
+        first,
+        last,
+      });
+
+      expect(dto1.toHash()).toBe(dto2.toHash());
     });
   });
 

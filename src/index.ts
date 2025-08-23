@@ -1,4 +1,6 @@
+import { createHash } from 'crypto';
 import deepEqual from 'deep-equal';
+import stableStringify from 'json-stable-stringify';
 import { z, ZodError, ZodObject, ZodType } from 'zod';
 
 export type DTOOptions<T extends ZodType> = {
@@ -26,10 +28,33 @@ export type DTOInterface<T extends ZodType> = {
   getData(): Readonly<z.infer<T>>;
 
   /**
+   * Get a single data item from the DTO.
+   *
+   * @param field The field to retrieve from the DTO data.
+   */
+  getDataItem(field: keyof z.infer<T>): z.infer<T>[keyof z.infer<T>];
+
+  /**
    * Converts the parsed data within the DTO instance to a `URLSearchParams`
    * object suitable for building a URL (e.g. for an API request).
    */
   toSearchParams(): URLSearchParams;
+
+  /**
+   * Converts the parsed data within the DTO instance to a JSON string. Creates
+   * JSON strings in a deterministic structure by recursively sorting the keys.
+   *
+   * @param pretty Whether to format the JSON string with indentation.
+   */
+  toJSONString(pretty?: boolean): string;
+
+  /**
+   * Converts the parsed data within the DTO instance to a hash.
+   *
+   * @param algo The hashing algorithm to use (e.g. 'sha1', 'md5'). Defaults to
+   * 'sha1'.
+   */
+  toHash(algo?: string): string;
 
   /**
    * Perform a deep equality check between the data contained within this DTO
@@ -112,6 +137,10 @@ export function DTO<T extends ZodObject>(
       }
     }
 
+    public getDataItem(field: keyof z.infer<T>): z.infer<T>[keyof z.infer<T>] {
+      return this.getData()[field];
+    }
+
     public toSearchParams() {
       const params = new URLSearchParams();
 
@@ -120,6 +149,16 @@ export function DTO<T extends ZodObject>(
       }
 
       return params;
+    }
+
+    public toJSONString(pretty = false): string {
+      return String(
+        stableStringify(this.getData(), pretty ? { space: 2 } : undefined),
+      );
+    }
+
+    public toHash(algo: string = 'sha1'): string {
+      return createHash(algo).update(this.toJSONString()).digest('hex');
     }
 
     public equals(target: DTOInterface<T>): boolean {
