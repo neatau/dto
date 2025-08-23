@@ -1,0 +1,11 @@
+.DS_Store
+/dist
+/node_modules
+/coverage
+
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+yarn-error.log
+
+.env

@@ -1,0 +1,47 @@
+{
+  "name": "@neatau/dto",
+  "description": "Functionality for defining, validating and consuming DTOs in your application.",
+  "version": "0.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "test": "jest --coverage"
+  },
+  "maintainers": [
+    {
+      "name": "Marty Wallace",
+      "email": "marty@neat.au",
+      "url": "https://martywallace.com"
+    }
+  ],
+  "packageManager": "yarn@4.9.3",
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "./src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  },
+  "dependencies": {
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.0.5",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.1",
+    "typescript": "^5.9.2"
+  }
+}

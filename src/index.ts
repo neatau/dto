@@ -1,0 +1,116 @@
+import { z, ZodError, ZodObject, ZodType } from 'zod';
+
+export type DTOOptions<T extends ZodType> = {
+  /**
+   * The Zod schema used to validate the data within the DTO and provide the
+   * shape of the data e.g. via `getData()`.
+   */
+  readonly schema: T;
+
+  /**
+   * Transforms an error caught while validating the DTO data into a new error
+   * instance. Useful if you want to customize the error handling for your
+   * DTOs e.g. by providing your own `ValidationError` type.
+   *
+   * @param error The original `ZodError` instance.
+   */
+  readonly transformError?: (error: ZodError) => unknown;
+};
+
+export type DTOInterface<T extends ZodType> = {
+  /**
+   * Parses and returns the data of the DTO instance. Throws a `ZodError` if the
+   * data provided does not validate against the configured schema.
+   */
+  getData(): Readonly<z.infer<T>>;
+
+  /**
+   * Converts the parsed data within the DTO instance to a `URLSearchParams`
+   * object suitable for building a URL (e.g. for an API request).
+   */
+  toSearchParams(): URLSearchParams;
+};
+
+export type DTOConstructor<T extends ZodType> = {
+  new (data: z.infer<T>): DTOInterface<T>;
+
+  /**
+   * Get the Zod schema associated with this DTO definition.
+   */
+  getSchema(): T;
+};
+
+/**
+ * Defines an anonymous base DTO class for extension by your own DTO, which
+ * accepts and applies an input Zod schema. Copies the values provided to the
+ * `data` constructor parameter to the instance.
+ *
+ * @param schema Zod schema used to specify the schema and validation rules of
+ * this DTO.
+ *
+ * @example
+ *
+ * ```typescript
+ * class CreateUserDTO extends DTO({
+ *   schema: z.object({
+ *     first: z.string().min(2).max(100),
+ *     last: z.string().min(2).max(100),
+ *     email: z.email(),
+ *   })
+ * }) {
+ *   get fullName() {
+ *     const { first, last } = this.getData();
+ *     return `${first} ${last}`;
+ *   }
+ * }
+ *
+ * const dto = new CreateUserDTO({
+ *   first: 'John',
+ *   last: 'Doe',
+ *   email: 'john.doe@example.com',
+ * });
+ *
+ * console.log(dto.getData());
+ * console.log(dto.fullName);
+ * ```
+ */
+export function DTO<T extends ZodObject>(
+  options: DTOOptions<T>,
+): DTOConstructor<T> {
+  // Use WeakMap to store the data since anonymous classes don't allow
+  // non-public members. Entries will be garbage collected when the DTO used as
+  // the key is no longer referenced.
+  const data = new WeakMap<DTOInterface<T>, z.infer<T>>();
+
+  return class implements DTOInterface<T> {
+    static getSchema() {
+      return options.schema;
+    }
+
+    constructor(input: z.infer<T>) {
+      data.set(this, input);
+    }
+
+    public getData(): Readonly<z.infer<T>> {
+      try {
+        return options.schema.parse(data.get(this)!);
+      } catch (error) {
+        if (options.transformError && error instanceof ZodError) {
+          throw options.transformError(error);
+        }
+
+        throw error;
+      }
+    }
+
+    public toSearchParams() {
+      const params = new URLSearchParams();
+
+      for (const [key, value] of Object.entries(this.getData())) {
+        params.append(key, String(value));
+      }
+
+      return params;
+    }
+  };
+}
