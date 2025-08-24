@@ -76,7 +76,7 @@ class CustomErrorDTO extends DTO({
 
 - `dto.getData()` - Parses and returns the data within the DTO. Throws if the
   data does not validate against the Zod schema for that DTO.
-- `dto.getDataItem()` - Returns a single data item by key from the DTO.
+- `dto.getDataItem('key')` - Returns a single data item by key from the DTO.
 - `dto.equals(target)` - Determine whether a DTO is equal to a target DTO using
   deep equality check.
 - `dto.toJSONString()` - Convert the data within the DTO to a deterministic JSON
