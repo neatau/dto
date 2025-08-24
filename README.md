@@ -18,7 +18,7 @@ Problems solved:
     `URLSearchParams`.
 - Validation and type inference via Zod.
 
-![Diagram](./docs/dto.png)
+![Diagram](https://raw.githubusercontent.com/neatau/dto/refs/heads/main/docs/dto.png)
 
 ## Examples
 
