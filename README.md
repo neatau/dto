@@ -5,8 +5,8 @@ $ npm install @neatau/dto
 ```
 
 TypeScript library that provides a foundation for defining and passing DTOs from
-your input layer (e.g. REST controllers, GraphQL resolvers, ...) into your
-service layer, built on top of Zod.
+your input layer (e.g. REST controllers, GraphQL resolvers, RabbitMQ messages,
+...) into your service layer, built on top of [Zod](https://zod.dev).
 
 Problems solved:
 
@@ -17,6 +17,8 @@ Problems solved:
   - Conversion to other commonly required data structures such as
     `URLSearchParams`.
 - Validation and type inference via Zod.
+
+![Diagram](./docs/dto.png)
 
 ## Examples
 
