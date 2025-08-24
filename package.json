@@ -1,12 +1,13 @@
 {
   "name": "@neatau/dto",
   "description": "Functionality for defining, validating and consuming DTOs in your application.",
-  "version": "0.0.0",
+  "version": "0.1.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "publish": "yarn build && yarn npm publish --access public"
   },
   "maintainers": [
     {

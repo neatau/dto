@@ -1,8 +1,12 @@
 # DTO
 
+```sh
+$ npm install @neatau/dto
+```
+
 TypeScript library that provides a foundation for defining and passing DTOs from
 your input layer (e.g. REST controllers, GraphQL resolvers, ...) into your
-service layer.
+service layer, built on top of Zod.
 
 Problems solved:
 
@@ -10,8 +14,9 @@ Problems solved:
   - Deterministic JSON serialization.
   - Deterministic hashing.
   - Deep equality checks between DTOs.
-  - Conversion to other commonly required data structures such as `URLSearchParams`.
-- Validation via Zod.
+  - Conversion to other commonly required data structures such as
+    `URLSearchParams`.
+- Validation and type inference via Zod.
 
 ## Examples
 
@@ -66,3 +71,16 @@ class CustomErrorDTO extends DTO({
   //
 }
 ```
+
+### Functionality Glossary
+
+- `dto.getData()` - Parses and returns the data within the DTO. Throws if the
+  data does not validate against the Zod schema for that DTO.
+- `dto.getDataItem()` - Returns a single data item by key from the DTO.
+- `dto.equals(target)` - Determine whether a DTO is equal to a target DTO using
+  deep equality check.
+- `dto.toJSONString()` - Convert the data within the DTO to a deterministic JSON
+  string using deep sort on the keys.
+- `dto.toHash(algo)` - Produce a deterministic hash of the data within the DTO.
+- `dto.toSearchParams()` - Produce a `URLSearchParams` of the data within the
+  DTO.

@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { z, ZodError } from 'zod';
 import { DTO } from '.';
 
-describe('BaseDTO', () => {
+describe('DTO', () => {
   const CreateUserSchema = z.object({
     first: z.string().min(2).max(100),
     last: z.string().min(2).max(100),

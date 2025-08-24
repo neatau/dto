@@ -23,7 +23,9 @@ export type DTOOptions<T extends ZodType> = {
 export type DTOInterface<T extends ZodType> = {
   /**
    * Parses and returns the data of the DTO instance. Throws a `ZodError` if the
-   * data provided does not validate against the configured schema.
+   * data provided does not validate against the configured schema, or your own
+   * custom error if a `transformError` function was provided when creating the
+   * DTO class.
    */
   getData(): Readonly<z.infer<T>>;
 
@@ -76,11 +78,7 @@ export type DTOConstructor<T extends ZodType> = {
 
 /**
  * Defines an anonymous base DTO class for extension by your own DTO, which
- * accepts and applies an input Zod schema. Copies the values provided to the
- * `data` constructor parameter to the instance.
- *
- * @param schema Zod schema used to specify the schema and validation rules of
- * this DTO.
+ * accepts and applies an input Zod schema.
  *
  * @example
  *

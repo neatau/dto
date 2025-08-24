@@ -5,10 +5,11 @@
     "module": "commonjs",
     "outDir": "./dist",
     "declaration": true,
+    "declarationMap": true,
     "noImplicitAny": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "skipLibCheck": true,
+    "skipLibCheck": false,
     "strict": true,
     "esModuleInterop": true
   },
