@@ -30,6 +30,12 @@ export type DTOInterface<T extends ZodType> = {
   getData(): Readonly<z.infer<T>>;
 
   /**
+   * Returns the raw input data of the DTO instance without parsing, skipping
+   * validation rules present on the Zod schema.
+   */
+  getUnsafeData(): Readonly<z.infer<T>>;
+
+  /**
    * Get a single data item from the DTO.
    *
    * @param field The field to retrieve from the DTO data.
@@ -133,6 +139,10 @@ export function DTO<T extends ZodObject>(
 
         throw error;
       }
+    }
+
+    public getUnsafeData(): Readonly<z.infer<T>> {
+      return data.get(this)!;
     }
 
     public getDataItem(field: keyof z.infer<T>): z.infer<T>[keyof z.infer<T>] {
