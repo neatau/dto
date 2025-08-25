@@ -1,5 +1,7 @@
 # DTO
 
+[API Documentation](https://neatau.github.io/dto/interfaces/DTOInterface.html)
+
 ```sh
 $ npm install @neatau/dto
 ```
@@ -73,17 +75,3 @@ class CustomErrorDTO extends DTO({
   //
 }
 ```
-
-### Functionality Glossary
-
-- `dto.getData()` - Parses and returns the data within the DTO. Throws if the
-  data does not validate against the Zod schema for that DTO.
-- `dto.getUnsafeData()` - Returns the raw input data without validation.
-- `dto.getDataItem('key')` - Returns a single data item by key from the DTO.
-- `dto.equals(target)` - Determine whether a DTO is equal to a target DTO using
-  deep equality check.
-- `dto.toJSONString()` - Convert the data within the DTO to a deterministic JSON
-  string using deep sort on the keys.
-- `dto.toHash(algo)` - Produce a deterministic hash of the data within the DTO.
-- `dto.toSearchParams()` - Produce a `URLSearchParams` of the data within the
-  DTO.
