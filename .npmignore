@@ -4,6 +4,7 @@ coverage
 .prettierrc
 .yarn
 .yarnrc.yml
+typedocs
 docs
 src/**/*.spec.ts
 dist/**/*.spec.ts

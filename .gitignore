@@ -9,4 +9,4 @@
 yarn-error.log
 
 .env
-docs
+typedocs

@@ -12,7 +12,7 @@
     "build": "rm -rf dist && tsc",
     "test": "jest --coverage",
     "publish": "yarn build && yarn npm publish --access public",
-    "docs": "npx typedoc --out docs src"
+    "docs": "npx typedoc --out typedocs src"
   },
   "maintainers": [
     {
