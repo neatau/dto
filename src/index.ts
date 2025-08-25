@@ -1,7 +1,10 @@
-import { createHash } from 'crypto';
+import cloneDeep from 'clone-deep';
+import { createHash, randomUUID } from 'crypto';
 import deepEqual from 'deep-equal';
 import stableStringify from 'json-stable-stringify';
-import { z, ZodError, ZodObject, ZodType } from 'zod';
+import { z, ZodError, ZodType } from 'zod';
+
+export type DTOData<T extends ZodType> = Readonly<z.infer<T>>;
 
 export type DTOOptions<T extends ZodType> = {
   /**
@@ -16,31 +19,53 @@ export type DTOOptions<T extends ZodType> = {
    * DTOs e.g. by providing your own `ValidationError` type.
    *
    * @param error The original `ZodError` instance.
+   * @param unsafeData The raw input data that failed validation.
    */
-  readonly transformError?: (error: ZodError) => unknown;
+  readonly transformError?: (
+    error: ZodError,
+    unsafeData: DTOData<T>,
+  ) => unknown;
 };
 
-export type DTOInterface<T extends ZodType> = {
+export interface DTOInterface<T extends ZodType> {
+  /**
+   * Unique identifier assigned to the DTO at creation.
+   */
+  readonly id: string;
+
+  /**
+   * The creation date of the DTO.
+   */
+  readonly createdAt: Date;
+
   /**
    * Parses and returns the data of the DTO instance. Throws a `ZodError` if the
    * data provided does not validate against the configured schema, or your own
    * custom error if a `transformError` function was provided when creating the
    * DTO class.
+   *
+   * Caches the parsed data for repeat access.
    */
-  getData(): Readonly<z.infer<T>>;
+  getData(): DTOData<T>;
 
   /**
    * Returns the raw input data of the DTO instance without parsing, skipping
    * validation rules present on the Zod schema.
    */
-  getUnsafeData(): Readonly<z.infer<T>>;
+  getUnsafeData(): DTOData<T>;
 
   /**
    * Get a single data item from the DTO.
    *
    * @param field The field to retrieve from the DTO data.
    */
-  getDataItem(field: keyof z.infer<T>): z.infer<T>[keyof z.infer<T>];
+  getDataItem(field: keyof DTOData<T>): DTOData<T>[keyof DTOData<T>];
+
+  /**
+   * Returns the error encountered during data parsing, if any. Applies the
+   * provided `transformError` function if it exists.
+   */
+  getError(): unknown | null;
 
   /**
    * Converts the parsed data within the DTO instance to a `URLSearchParams`
@@ -65,16 +90,34 @@ export type DTOInterface<T extends ZodType> = {
   toHash(algo?: string): string;
 
   /**
+   * Converts this DTO instance to a string representation for debugging.
+   */
+  toString(): string;
+
+  /**
    * Perform a deep equality check between the data contained within this DTO
    * and the target DTO of the same type.
    *
    * @param target The target DTO.
    */
   equals(target: DTOInterface<T>): boolean;
-};
+
+  /**
+   * Creates a clone of this DTO instance.
+   */
+  clone(): DTOInterface<T>;
+
+  /**
+   * Produce a new DTO instance with the input data merged with the contents of
+   * this DTO.
+   *
+   * @param data The new data to merge with the data from this DTO.
+   */
+  with(data: Partial<DTOData<T>>): DTOInterface<T>;
+}
 
 export type DTOConstructor<T extends ZodType> = {
-  new (data: z.infer<T>): DTOInterface<T>;
+  new (data: DTOData<T>): DTOInterface<T>;
 
   /**
    * Get the Zod schema associated with this DTO definition.
@@ -112,41 +155,81 @@ export type DTOConstructor<T extends ZodType> = {
  * console.log(dto.fullName);
  * ```
  */
-export function DTO<T extends ZodObject>(
+export function DTO<T extends ZodType>(
   options: DTOOptions<T>,
 ): DTOConstructor<T> {
   // Use WeakMap to store the data since anonymous classes don't allow
   // non-public members. Entries will be garbage collected when the DTO used as
   // the key is no longer referenced.
-  const data = new WeakMap<DTOInterface<T>, z.infer<T>>();
+  const data = new WeakMap<DTOInterface<T>, DTOData<T>>();
+  const parsedData = new WeakMap<DTOInterface<T>, DTOData<T>>();
 
   return class implements DTOInterface<T> {
     static getSchema() {
       return options.schema;
     }
 
-    constructor(input: z.infer<T>) {
+    public readonly id = randomUUID();
+    public readonly createdAt = new Date();
+
+    constructor(input: DTOData<T>) {
       data.set(this, input);
     }
 
-    public getData(): Readonly<z.infer<T>> {
+    public getData(): DTOData<T> {
+      const parsed = parsedData.get(this);
+
+      if (parsed) {
+        // Grab from parsed cache directly.
+        return parsed;
+      }
+
       try {
-        return options.schema.parse(data.get(this)!);
+        const parsed = options.schema.parse(this.getUnsafeData());
+        parsedData.set(this, parsed);
+
+        return parsed;
       } catch (error) {
         if (options.transformError && error instanceof ZodError) {
-          throw options.transformError(error);
+          throw options.transformError(error, this.getUnsafeData());
         }
 
         throw error;
       }
     }
 
-    public getUnsafeData(): Readonly<z.infer<T>> {
-      return data.get(this)!;
+    public getUnsafeData(): DTOData<T> {
+      const value = data.get(this);
+
+      if (!value) {
+        // Shouldn't ever happen, but if WeakMap gives us some dodgy behaviour
+        // later then at least we have a stack trace to pinpoint the issue.
+        throw new Error(
+          `Unable to resolve data for DTO ${this.constructor.name}`,
+        );
+      }
+
+      return value;
     }
 
-    public getDataItem(field: keyof z.infer<T>): z.infer<T>[keyof z.infer<T>] {
+    public getDataItem(field: keyof DTOData<T>): DTOData<T>[keyof DTOData<T>] {
       return this.getData()[field];
+    }
+
+    public getError(): unknown | null {
+      try {
+        options.schema.parse(this.getUnsafeData());
+      } catch (error) {
+        if (error instanceof ZodError) {
+          return options.transformError
+            ? options.transformError(error, this.getUnsafeData())
+            : error;
+        }
+
+        throw error;
+      }
+
+      return null;
     }
 
     public toSearchParams() {
@@ -171,6 +254,22 @@ export function DTO<T extends ZodObject>(
 
     public equals(target: DTOInterface<T>): boolean {
       return deepEqual(this.getData(), target.getData());
+    }
+
+    public clone(): DTOInterface<T> {
+      const data = this.getUnsafeData();
+      return new (this.constructor as DTOConstructor<T>)(cloneDeep(data));
+    }
+
+    public with(data: Partial<DTOData<T>>): DTOInterface<T> {
+      return new (this.constructor as DTOConstructor<T>)({
+        ...this.getUnsafeData(),
+        ...data,
+      });
+    }
+
+    public toString() {
+      return `${this.constructor.name}(${this.id}): ${this.toJSONString()}`;
     }
   };
 }

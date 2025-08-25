@@ -5,4 +5,5 @@ coverage
 .yarn
 .yarnrc.yml
 docs
-*.spec.ts
+src/**/*.spec.ts
+dist/**/*.spec.ts
