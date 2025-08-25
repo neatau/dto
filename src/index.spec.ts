@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createHash } from 'crypto';
+import { JwtPayload, verify } from 'jsonwebtoken';
 import { z, ZodError } from 'zod';
 import { DTO } from '.';
 
@@ -271,6 +272,31 @@ describe('DTO', () => {
       expect(dto1.toHash()).toBe(dto2.toHash());
 
       console.log(String(dto1));
+    });
+  });
+
+  describe('toJWT()', () => {
+    it('will create a JWT from the DTO data', () => {
+      const first = faker.person.firstName();
+      const last = faker.person.lastName();
+      const email = faker.internet.email();
+
+      const dto = new CreateUserDTO({
+        first,
+        last,
+        email,
+      });
+
+      const jwt = dto.toJWT('test', 3600);
+      const parsed = verify(jwt, 'test');
+
+      expect(parsed).toEqual({
+        email,
+        first,
+        last,
+        iat: expect.any(Number),
+        exp: (parsed as JwtPayload).iat! + 3600,
+      });
     });
   });
 

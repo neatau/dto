@@ -2,6 +2,7 @@ import cloneDeep from 'clone-deep';
 import { createHash, randomUUID } from 'crypto';
 import deepEqual from 'deep-equal';
 import stableStringify from 'json-stable-stringify';
+import { PrivateKey, Secret, sign } from 'jsonwebtoken';
 import { z, ZodError, ZodType } from 'zod';
 
 export type DTOData<T extends ZodType> = Readonly<z.infer<T>>;
@@ -88,6 +89,15 @@ export interface DTOInterface<T extends ZodType> {
    * 'sha1'.
    */
   toHash(algo?: string): string;
+
+  /**
+   * Converts the parsed data within the DTO instance to a JWT.
+   *
+   * @params secretOrPrivateKey The secret or private key to sign the JWT with.
+   * @params ttl The time-to-live for the JWT in seconds. Sets the `exp` claim
+   * to the current timestamp plus the TTL, or omits this claim if not provided.
+   */
+  toJWT(secretOrPrivateKey: Secret | PrivateKey, ttl?: number): string;
 
   /**
    * Converts this DTO instance to a string representation for debugging.
@@ -250,6 +260,18 @@ export function DTO<T extends ZodType>(
 
     public toHash(algo: string = 'sha1'): string {
       return createHash(algo).update(this.toJSONString()).digest('hex');
+    }
+
+    public toJWT(
+      secretOrPrivateKey: Secret | PrivateKey,
+      ttl?: number,
+    ): string {
+      const payload = {
+        ...this.getData(),
+        ...(ttl ? { exp: Math.floor(Date.now() / 1000) + ttl } : {}),
+      };
+
+      return sign(payload, secretOrPrivateKey);
     }
 
     public equals(target: DTOInterface<T>): boolean {
