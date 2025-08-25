@@ -35,9 +35,9 @@ export interface DTOInterface<T extends ZodType> {
   readonly id: string;
 
   /**
-   * The creation date of the DTO.
+   * The creation timestamp of the DTO.
    */
-  readonly createdAt: Date;
+  readonly createdAt: number;
 
   /**
    * Parses and returns the data of the DTO instance. Throws a `ZodError` if the
@@ -133,6 +133,11 @@ export type DTOConstructor<T extends ZodType> = {
    * Get the Zod schema associated with this DTO definition.
    */
   getSchema(): T;
+
+  /**
+   * Create a new instance of this DTO.
+   */
+  create(input: DTOData<T>): DTOInterface<T>;
 };
 
 /**
@@ -179,8 +184,12 @@ export function DTO<T extends ZodType>(
       return options.schema;
     }
 
+    static create(input: DTOData<T>): DTOInterface<T> {
+      return new this(input);
+    }
+
     public readonly id = randomUUID();
-    public readonly createdAt = new Date();
+    public readonly createdAt = Date.now();
 
     constructor(input: DTOData<T>) {
       data.set(this, input);

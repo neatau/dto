@@ -6,8 +6,8 @@ import { DTO } from '.';
 
 describe('DTO', () => {
   const CreateUserSchema = z.object({
-    first: z.string().min(2).max(100),
-    last: z.string().min(2).max(100),
+    first: z.string().min(2).max(100).trim(),
+    last: z.string().min(2).max(100).trim(),
     email: z.email(),
   });
 
@@ -25,7 +25,14 @@ describe('DTO', () => {
       email: faker.internet.email(),
     });
 
+    const dto2 = CreateUserDTO.create({
+      first: faker.person.firstName(),
+      last: faker.person.lastName(),
+      email: faker.internet.email(),
+    });
+
     expect(dto).toBeInstanceOf(CreateUserDTO);
+    expect(dto2).toBeInstanceOf(CreateUserDTO);
     expect(CreateUserDTO.getSchema()).toBe(CreateUserSchema);
   });
 
